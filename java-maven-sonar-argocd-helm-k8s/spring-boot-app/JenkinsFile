@@ -24,6 +24,14 @@ pipeline {
     SONAR_URL = "http://3.142.201.123:9000"
   }
   steps {
+    sh '''
+  export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+  export PATH=$JAVA_HOME/bin:$PATH
+  echo "Cleaning SonarQube temporary files..."
+  rm -rf /root/.sonar/_tmp || true
+  cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
+  mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}
+'''
     withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
       sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
     }
