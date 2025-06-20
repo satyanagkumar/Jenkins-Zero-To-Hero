@@ -12,32 +12,34 @@ pipeline {
         //git branch: 'main', url: 'https://github.com/iam-veeramalla/Jenkins-Zero-To-Hero.git'
       }
     }
-    stage('Build and Test') {
-      steps {
-        sh 'ls -ltr'
-        // build the project and create a JAR file
-        sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && mvn clean package'
-      }
-    }
-  stage('Static Code Analysis') {
+    stage('Static Code Analysis') {
   environment {
     SONAR_URL = "http://3.142.201.123:9000"
   }
   steps {
     withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-sh '''
-  export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-  export PATH=$JAVA_HOME/bin:$PATH
-  echo "Cleaning SonarQube temporary files..."
-  rm -rf /root/.sonar/_tmp || true
-  cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-  mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}
-'''
+      sh '''
+        echo "Detecting JAVA_HOME..."
+        export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+        export PATH=$JAVA_HOME/bin:$PATH
 
+        echo "Detected JAVA_HOME: $JAVA_HOME"
+        java -version
+        javac -version
 
+        echo "Cleaning SonarQube temporary files..."
+        rm -rf /root/.sonar/_tmp || true
+
+        cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
+
+        mvn -Djava.home=$JAVA_HOME sonar:sonar \
+          -Dsonar.login=$SONAR_AUTH_TOKEN \
+          -Dsonar.host.url=${SONAR_URL}
+      '''
     }
   }
 }
+
 
     stage('Build and Push Docker Image') {
       environment {
