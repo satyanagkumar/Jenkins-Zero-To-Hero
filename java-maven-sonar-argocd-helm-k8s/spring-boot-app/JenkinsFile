@@ -20,23 +20,12 @@ pipeline {
   steps {
     withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
       sh '''
-        echo "Detecting JAVA_HOME..."
-        export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
-        export PATH=$JAVA_HOME/bin:$PATH
-
-        echo "Detected JAVA_HOME: $JAVA_HOME"
-        java -version
-        javac -version
-
-        echo "Cleaning SonarQube temporary files..."
-        rm -rf /root/.sonar/_tmp || true
-
-        cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-
-        mvn -Djava.home=$JAVA_HOME sonar:sonar \
-          -Dsonar.login=$SONAR_AUTH_TOKEN \
-          -Dsonar.host.url=${SONAR_URL}
-      '''
+          echo "Cleaning Sonar temp..."
+          rm -rf /root/.sonar/_tmp || true
+          rm -rf /root/.m2/repository || true
+          cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
+          mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=http://3.142.201.123:9000
+        '''
     }
   }
 }
