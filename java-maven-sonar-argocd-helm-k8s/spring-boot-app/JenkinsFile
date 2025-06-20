@@ -1,10 +1,10 @@
 pipeline {
   agent {
-    docker {
-      image 'abhishekf5/maven-abhishek-docker-agent:v1'
-      args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
-    }
+  docker {
+    image 'maven:3.9.6-eclipse-temurin-17'
+    args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
   }
+}
   stages {
     stage('Checkout') {
       steps {
@@ -22,18 +22,10 @@ pipeline {
   stage('Static Code Analysis') {
   environment {
     SONAR_URL = "http://3.142.201.123:9000"
-    JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"  // Adjust path if needed
-    PATH = "/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH"
   }
   steps {
     withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-      sh '''
-        echo "JAVA Version:"
-        java -version
-        echo "JAVA HOME: $JAVA_HOME"
-        cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-        mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}
-      '''
+      sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
     }
   }
 }
